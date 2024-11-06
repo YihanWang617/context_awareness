@@ -1,0 +1,2 @@
+task: quac_no_template_no_ind
+class: !function task.QUACNoTemplateNoInd

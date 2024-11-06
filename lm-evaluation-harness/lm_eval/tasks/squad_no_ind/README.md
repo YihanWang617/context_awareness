@@ -1,0 +1,1 @@
+../squad_completion_no_hint/README.md

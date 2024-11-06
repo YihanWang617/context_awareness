@@ -1,0 +1,2 @@
+task: squad_no_template
+class: !function task.SQUADNoTemplate

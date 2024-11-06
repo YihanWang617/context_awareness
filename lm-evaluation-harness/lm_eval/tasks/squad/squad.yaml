@@ -1,0 +1,2 @@
+task: squad
+class: !function task.SQUAD

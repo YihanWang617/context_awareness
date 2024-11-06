@@ -1,0 +1,16 @@
+LLMTest_NeedleInAHaystack/contexts
+*results.json
+*.pdf
+*.png
+__pycache__/
+*.un~
+*.ipynb_checkpoints
+*__pycache__/
+*.DS_Store
+beyond-scale-language-data-diversity/
+analyse_dataset/cache
+None/
+*.egg-info/
+*attn_distr*
+*.json
+llm-jailbreaking-defense/

@@ -1,12 +1,11 @@
 import os
+import torch
 from LLMNeedleHaystackTester import LLMNeedleHaystackTester
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from fastchat.conversation import get_conv_template
 from utils import conv_template_dict, smart_tokenizer_and_embedding_resize
 from argparse import ArgumentParser
 from needle_config import needle_dict
-
-from pastalib.utils.CustomLlama3Tokenizer import CustomLlama3Tokenizer
 
 class HuggingfaceTester(LLMNeedleHaystackTester):
     def __init__(self, **kwargs):
@@ -36,6 +35,10 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
         if 'attn_implementation' in kwargs:
             model_load_kwargs['attn_implementation'] = kwargs.pop('attn_implementation')
 
+        for model_name in ['llama-2-70b', 'llama-3', 'gemma', 'gemma-2', 'qwen2.5']:
+            if model_name in self.model_name.lower():
+                model_load_kwargs['torch_dtype'] = torch.bfloat16
+
         self.model_to_test = AutoModelForCausalLM.from_pretrained(self.model_name, device_map='auto', **model_load_kwargs)
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -45,13 +48,19 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
             self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
             
         if 'llama-3' in self.model_name.lower():
+            from pastalib.utils.CustomLlama3Tokenizer import CustomLlama3Tokenizer
             self.tokenizer = CustomLlama3Tokenizer(self.tokenizer)
 
 
         
         self.template = kwargs.pop("template")
         self.add_hint = kwargs.pop('add_hint')
-        self.add_system_prompt = kwargs.pop('add_system_prompt', True)
+        if 'gemma-7b-it' in self.model_name.lower():
+            print("Gemma-7b-t does not support system prompts.")
+            kwargs.pop('add_system_prompt')
+            self.add_system_prompt = False 
+        else:
+            self.add_system_prompt = kwargs.pop('add_system_prompt', True)
 
         super().__init__(**kwargs)
 
@@ -90,6 +99,7 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
         generate_ids = generate_ids[:, inputs["input_ids"].shape[1]:]
         response = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
 
+        '''
         conv = get_conv_template(self.template)
         # vicuna_v1.1 llama-2 zero_shot TinyLlama zephyr raw
         
@@ -106,6 +116,7 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
                     response = response[:pos]
             else:
                 raise ValueError()
+        '''
         return response
 
 def main(model_name, template, needle_name, evaluation_method="substring_match", context_lengths_min=200, context_lengths_max=4000, add_hint=False, add_system_prompt=True, save_model_suffix=None):

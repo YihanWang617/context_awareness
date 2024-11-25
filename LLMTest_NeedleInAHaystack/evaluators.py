@@ -74,8 +74,8 @@ class SubwordMatchEvaluator(Evaluator):
             response = response.lower().replace(p, ' ')
 
         response = response.split(' ')
+        response = sum([r.split('\n') for r in response], [])
         response = [a.strip() for a in response]
-        
         res = mean(word in response for word in self.substr_validation_words)
         return res
     

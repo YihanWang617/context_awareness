@@ -71,7 +71,7 @@ def remove_prompt(item, max_token_length=2047):
 
     return item
 
-def modify_prompt(item, threshold=0.6, max_token_length=2047):
+def modify_prompt(item, threshold=0.5, max_token_length=2047):
     global positive_cnt, negative_cnt, none_cnt
     new_item = {}
     conv = item.pop('messages')

@@ -556,6 +556,7 @@ class HFLM(TemplateLM):
                 revision=revision,
                 torch_dtype=get_dtype(dtype),
                 trust_remote_code=trust_remote_code,
+                attn_implementation='eager',
                 **model_kwargs,
             )
         else:

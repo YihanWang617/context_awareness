@@ -35,7 +35,7 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
         if 'attn_implementation' in kwargs:
             model_load_kwargs['attn_implementation'] = kwargs.pop('attn_implementation')
 
-        for model_name in ['llama-2-70b', 'llama-3', 'gemma', 'gemma-2', 'qwen2.5']:
+        for model_name in ['llama-2-70b', 'llama-2', 'llama-3', 'gemma', 'gemma-2', 'qwen2.5']:
             if model_name in self.model_name.lower():
                 model_load_kwargs['torch_dtype'] = torch.bfloat16
 
@@ -55,7 +55,7 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
         
         self.template = kwargs.pop("template")
         self.add_hint = kwargs.pop('add_hint')
-        if 'gemma-7b-it' in self.model_name.lower():
+        if 'gemma' in self.model_name.lower():
             print("Gemma-7b-t does not support system prompts.")
             kwargs.pop('add_system_prompt')
             self.add_system_prompt = False 
@@ -87,15 +87,17 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
             else:
                 conv.append(dict(role='assistant', content=hint))
                 prompt = self.tokenizer.apply_chat_template(conv, tokenize=False, add_generation_prompt=False)
-                prompt = prompt.strip().removesuffix(f'{self.tokenizer.bos_token}').removesuffix(f'{self.tokenizer.eos_token}').removesuffix(f'{self.tokenizer.bos_token}').strip()
+                prompt = prompt.strip().removesuffix(f'{self.tokenizer.bos_token}').removesuffix(f'{self.tokenizer.eos_token}').removesuffix(f'{self.tokenizer.bos_token}').removesuffix('<end_of_turn>').strip()
         else:
-            prompt = self.tokenizer.apply_chat_template(conv, tokenize=False, add_generation_prompt=True)
-
+            if self.template == 'raw':
+                prompt = user_prompt
+            else:
+                prompt = self.tokenizer.apply_chat_template(conv, tokenize=False, add_generation_prompt=True)
         return prompt
 
     async def get_response_from_model(self, prompt):
         inputs = self.tokenizer(prompt, return_tensors="pt").to('cuda')
-        generate_ids = self.model_to_test.generate(inputs.input_ids, max_new_tokens=50, pad_token_id=self.tokenizer.pad_token_id)
+        generate_ids = self.model_to_test.generate(inputs.input_ids, max_new_tokens=100, pad_token_id=self.tokenizer.pad_token_id)
         generate_ids = generate_ids[:, inputs["input_ids"].shape[1]:]
         response = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
 

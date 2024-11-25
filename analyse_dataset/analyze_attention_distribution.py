@@ -54,10 +54,14 @@ def conv_concat(conv, tokenizer, template='tinyllama'):
         return f' '.join(messages) + f' {tokenizer.eos_token}'
     if template == 'llama-3':
         return f' '.join(messages) + f'{tokenizer.eos_token}'
+    if template == 'mistral':
+        return f' '.join(messages) + f'{tokenizer.eos_token}'
+    if template == 'gemma':
+        return f' '.join(messages) + '<end_of_turn>'
 
 def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_attn_over_response=True, add_system_prompt=True, template='tinyllama', verbose=False):
 
-    if add_system_prompt and (conv["messages"][0]['role'] != 'system'):
+    if add_system_prompt and (conv["messages"][0]['role'] != 'system') and 'gemma' not in str(type(model)).lower():
         conv["messages"].insert(0, dict(role="system", content=""))
     conv['text'] = tokenizer.apply_chat_template(conv["messages"], tokenize=False)
     conv['raw_text'] = conv_concat(conv, tokenizer, template)
@@ -67,8 +71,13 @@ def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_a
     raw_tokens = [tokenizer.bos_token] + tokenizer.tokenize(conv['raw_text'])
     raw_inputs = tokenizer(conv['raw_text'], return_tensors='pt')
 
-    tokens = [tokenizer.bos_token] + tokenizer.tokenize(conv['text'])
-    inputs = tokenizer(conv['text'], return_tensors='pt')
+
+    tokens = tokenizer.tokenize(conv['text'])
+    if tokens[0] != tokenizer.bos_token:
+        tokens = [tokenizer.bos_token] + tokens
+        inputs = tokenizer(conv['text'], return_tensors='pt')
+    else:
+        inputs = tokenizer(conv['text'], return_tensors='pt', add_special_tokens=False)
 
     start_ptr = 0
     matched_substring_ids = []
@@ -76,7 +85,6 @@ def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_a
     # print(raw_tokens)
     # print(tokens)
 
-    # import pdb; pdb.set_trace()
 
     for i, (token_id, token) in enumerate(zip(raw_inputs['input_ids'][0].tolist()[::-1], raw_tokens[::-1])):
         while tokenizer.decode(inputs['input_ids'][0].tolist()[::-1][start_ptr]).strip(' ') != tokenizer.decode(token_id).strip(' '):
@@ -125,10 +133,10 @@ def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_a
         for _id in rel_ids[-1]:
             if raw_tokens[_id] == is_token:
                 target_ids.append(_id)
-                break
         if len(target_ids) == 0:
             raise ValueError(raw_tokens, [raw_tokens[_id] for _id in rel_ids[-1]],
                              raw_tokens[target_ids[0]], tokenizer.tokenize(" is")[-1])
+        target_ids = [target_ids[-1]]
 
     for rel_id in target_ids:
         i = np.where(rel_ids[-1] == rel_id)[0][0]
@@ -177,10 +185,11 @@ def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_a
             for _id in rel_ids[-1]:
                 if tokens[_id] == is_token:
                     target_ids.append(_id)
-                    break
             if len(target_ids) == 0:
                 raise ValueError(tokens, [tokens[_id] for _id in rel_ids[-1]],
                                  tokens[target_ids[0]], tokenizer.tokenize(" is")[-1])
+
+            target_ids = [target_ids[-1]]
         
         for rel_id in target_ids:
             i = np.where(rel_ids[-1] == rel_id)[0][0]
@@ -218,6 +227,8 @@ def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_a
             for k in attn_distr_rm_template.keys():
                 attn_distr_rm_template[k] /= Z
 
+            print(attn_distr_no_template)
+            print(attn_distr_rm_template)
             attn_distrs.append(attn_distr)
             attn_distrs_rm_template.append(attn_distr_rm_template)
         avg_attn_distr = {k: np.mean([d[k] for d in attn_distrs]) for k in attn_distrs[0].keys()}
@@ -253,7 +264,7 @@ def main(model_name: str, save_dir = "./attn_distr/", name_suffix: str=None,
     print(os.path.abspath(save_json_path))
     print(os.path.abspath(save_fig_path))
 
-    sfted = ('sft' in model_name.lower() or 'lora' in model_name.lower() or 'chat' in model_name.lower() or 'instruct' in model_name.lower())
+    sfted = ('sft' in model_name.lower() or 'lora' in model_name.lower() or 'chat' in model_name.lower() or 'instruct' in model_name.lower() or 'it' in model_name.lower())
     if sfted:
         print(f"This is a finetuned chat model that uses chat templates.")
 

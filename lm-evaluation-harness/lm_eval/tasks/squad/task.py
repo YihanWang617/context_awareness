@@ -10,6 +10,7 @@ from lm_eval.api.task import ConfigurableTask
 import string
 import datasets
 from functools import partial
+import evaluate
 
 ARTICLES_REGEX = re.compile(r"\b(a|an|the)\b", re.UNICODE)
 
@@ -20,7 +21,7 @@ def contains_score(items):
     ) for (prediction, reference) in items])/len(items)
 
 def _squad_metric(predictions, references):
-    squad_metric = datasets.load_metric("squad_v2")
+    squad_metric = evaluate.load("squad_v2")
     return squad_metric.compute(predictions=predictions, references=references)
 
 
@@ -97,7 +98,7 @@ class SQUAD(ConfigurableTask):
 
         predictions = {
             "id": doc["id"],
-            "prediction_text": continuation,
+            "prediction_text": continuation[0],
             "no_answer_probability": 0,
         }
 

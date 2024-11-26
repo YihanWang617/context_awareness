@@ -28,6 +28,7 @@ class UserSteeredWrapper:
         )
 
         inputs, offset_mapping = pasta.inputs_from_batch(prompt)
+        inputs = inputs.to(self.model.device)
 
         with pasta.apply_steering(
             model=self.model, 
@@ -36,6 +37,6 @@ class UserSteeredWrapper:
             model_input=inputs,
             offsets_mapping=offset_mapping
         ) as steered_model: 
-            output = steered_model.generate(**inputs, **kwargs)[0]
+            output = steered_model.generate(**inputs, **kwargs, pad_token_id=self.tokenizer.pad_token_id, eos_token_id=self.tokenizer.eos_token_id)[0]
 
         return output[inputs.input_ids.shape[1]:]

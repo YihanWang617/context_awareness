@@ -7,6 +7,9 @@ from utils import conv_template_dict, smart_tokenizer_and_embedding_resize
 from argparse import ArgumentParser
 from needle_config import needle_dict
 
+import sys
+sys.path.append("../PASTA")
+
 class HuggingfaceTester(LLMNeedleHaystackTester):
     def __init__(self, **kwargs):
         if (("evaluation_method" not in kwargs) or (kwargs["evaluation_method"] == "gpt4")) and \
@@ -97,7 +100,7 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
 
     async def get_response_from_model(self, prompt):
         inputs = self.tokenizer(prompt, return_tensors="pt").to('cuda')
-        generate_ids = self.model_to_test.generate(inputs.input_ids, max_new_tokens=100, pad_token_id=self.tokenizer.pad_token_id)
+        generate_ids = self.model_to_test.generate(**inputs, max_new_tokens=100, pad_token_id=self.tokenizer.pad_token_id)
         generate_ids = generate_ids[:, inputs["input_ids"].shape[1]:]
         response = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
 

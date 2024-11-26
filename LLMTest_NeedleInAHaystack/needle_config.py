@@ -19,4 +19,9 @@ needle_dict = {
         'retrieval_question': 'What are the secret ingredients needed to build the perfect pizza? [IND]',
         'substr_validation_words': 'figs,prosciutto,smoked,applewood,bacon,lemon,goat,cheese,truffle,honey,pear,slices,espresso,soaked,dates,gorgonzola,dolce,candied,walnuts'
     },
+    'pizza-short':{
+        'needle': 'The secret ingredients needed to build the perfect pizza are figs, prosciutto, smoked applewood bacon and lemon. ',
+        'retrieval_question': 'What are the secret ingredients needed to build the perfect pizza?',
+        'substr_validation_words': 'figs,prosciutto,smoked,applewood,bacon,lemon'
+    },
 }

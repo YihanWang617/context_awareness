@@ -13,10 +13,21 @@ from UserSteeredWrapper import UserSteeredWrapper
 
 class PastaTester(HuggingfaceTester):
     
+    # PASTA_HEAD_CONFIGS = {
+    #     "tinyllama": {k: None for k in range(22)},
+    #     "llama-2": {k: None for k in range(32)},
+    #     "llama-3": {k: None for k in range(32)},
+    # }
+
+    # PASTA_HEAD_CONFIGS = {
+    #     "tinyllama": {k: None for k in range(22)},
+    #     "llama-2": {k: None for k in range(32)},
+    #     "llama-3": {0: [21, 9, 8, 11, 15], 1: [ 9, 12, 28, 29, 8], 2: [ 6, 14, 19, 22, 15], 3: [ 9, 20, 22, 21, 0], 4: [15, 10, 1, 19, 16], 5: [17, 7, 1, 24, 4], 6: [31, 26, 25, 9, 6], 7: [26, 13, 15, 22, 25], 8: [ 8, 1, 9, 31, 11], 9: [15, 16, 2, 12, 3], 10: [14, 29, 1, 31, 13], 11: [18, 6, 15, 9, 13], 12: [ 9, 5, 21, 10, 15], 13: [ 5, 21, 8, 4, 18], 14: [29, 5, 12, 31, 22], 15: [11, 21, 26, 29, 30], 16: [ 0, 19, 25, 26, 1], 17: [31, 27, 26, 24, 29], 18: [ 9, 0, 8, 22, 20], 19: [23, 13, 3, 14, 9], 20: [30, 9, 26, 12, 14], 21: [ 8, 11, 1, 14, 26], 22: [10, 11, 27, 29, 8], 23: [19, 20, 25, 27, 22], 24: [24, 23, 3, 18, 27], 25: [17, 18, 2, 6, 5],26: [27, 15, 6, 19, 30],27: [ 4, 5, 28, 7, 16], 28: [15, 20, 23, 18, 0], 29: [31, 8, 11, 9, 16], 30:[17, 21, 18, 27, 2], 31:[30, 28, 7, 29, 21]},
+    # }
     PASTA_HEAD_CONFIGS = {
         "tinyllama": {k: None for k in range(22)},
         "llama-2": {k: None for k in range(32)},
-        "llama-3": {k: None for k in range(32)},
+        "llama-3": {0: [15], 1: [8], 2: [15], 3: [0], 4: [16], 5: [4], 6: [6], 7: [25], 8: [11], 9: [3], 10: [13], 11: [13], 12: [15], 13: [18], 14: [22], 15: [30], 16: [1], 17: [29], 18: [20], 19: [9], 20: [14], 21: [26], 22: [8], 23: [22], 24: [27], 25: [5],26: [30],27: [6], 28: [0], 29: [16], 30:[2], 31:[21]},
     }
     
     @staticmethod
@@ -65,6 +76,9 @@ def main(model_name: str=None, template: str='default', needle_name: str="SF", e
 
     assert model_name is not None
     assert template in ["raw", "default"]
+
+    if save_model_suffix is None:
+        save_model_suffix = str(alpha)
 
     tester = PastaTester(model_name=model_name, 
                          template=template,

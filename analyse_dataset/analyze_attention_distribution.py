@@ -156,6 +156,9 @@ def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_a
             print(rel_id)
             raise ValueError()
         retrieval_head_idx = attn_[:,user_ids].sum(-1).argmax()
+        retrieval_top_head_idx = attn_[:,user_ids].sum(-1).argsort()
+        print(retrieval_top_head_idx[-5:])
+        exit()
         attn_distr_no_template = {'bos_token': attn_[retrieval_head_idx,bos_ids].sum(), 
                                   'user_prompt': attn_[retrieval_head_idx,user_ids].sum(), 
                                   'response_prompt': attn_[retrieval_head_idx,response_ids].sum(),}

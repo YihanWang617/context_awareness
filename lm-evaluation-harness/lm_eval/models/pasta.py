@@ -49,6 +49,12 @@ class PastaLM(HFLM):
         "llama-2": {k: None for k in range(32)},
         "llama-3": {k: None for k in range(32)},
     }
+
+    PASTA_HEAD_CONFIGS = {
+        "tinyllama": {k: None for k in range(22)},
+        "llama-2": {k: None for k in range(32)},
+        "llama-3": {0: [15], 1: [8], 2: [15], 3: [0], 4: [16], 5: [4], 6: [6], 7: [25], 8: [11], 9: [3], 10: [13], 11: [13], 12: [15], 13: [18], 14: [22], 15: [30], 16: [1], 17: [29], 18: [20], 19: [9], 20: [14], 21: [26], 22: [8], 23: [22], 24: [27], 25: [5],26: [30],27: [6], 28: [0], 29: [16], 30:[2], 31:[21]},
+    }
     
     @staticmethod
     def get_pasta_head_config(model_name):

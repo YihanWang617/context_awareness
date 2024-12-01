@@ -73,12 +73,13 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
     def get_decoding(self, encoded_context):
         return self.tokenizer.decode(encoded_context)
 
-    def get_prompt(self, context):
+    def get_prompt(self, context, return_context=False):
         conv = []
 
         if self.add_system_prompt:
             conv.append(dict(role='system', content=''))
-        conv.append(dict(role='user', content=f"You are a helpful AI assistant that answers a question using only the provided document: \n{context}\n\nQuestion: {self.retrieval_question}"))
+        content = f"You are a helpful AI assistant that answers a question using only the provided document: \n{context}\n\nQuestion: {self.retrieval_question}"
+        conv.append(dict(role='user', content=content))
 
         if self.add_hint:
             hint = " ".join(self.needle.split(" ")[:8])
@@ -96,6 +97,8 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
                 prompt = user_prompt
             else:
                 prompt = self.tokenizer.apply_chat_template(conv, tokenize=False, add_generation_prompt=True)
+        if return_context:
+            return prompt, content
         return prompt
 
     async def get_response_from_model(self, prompt):

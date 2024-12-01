@@ -33,6 +33,7 @@ class LLMNeedleHaystackTester(ABC):
         results_version=1,
         context_lengths_min=1000,
         context_lengths_max=200000,
+        start_context_lengths=1000,
         context_lengths_num_intervals=20,
         context_lengths=None,
         document_depth_percent_min=0,
@@ -107,6 +108,7 @@ class LLMNeedleHaystackTester(ABC):
                         endpoint=True,
                     )
                 ).astype(int)
+                self.context_lengths = [a for a in self.context_lengths if a >= start_context_lengths]
         else:
             self.context_lengths = context_lengths
 

@@ -3,8 +3,10 @@ import numpy as np
 
 
 def conv_to_text(conversation, probe_tokenizer):
-    conversation['text'] = probe_tokenizer.apply_chat_template(conversation, tokenize=False, add_generation_prompt=False)
-    return conversation
+    if conversation[0]['role'] != 'system':
+        conversation.insert(0, {'role': 'system', 'content': ''})
+    text_prompt = probe_tokenizer.apply_chat_template(conversation, tokenize=False, add_generation_prompt=False)
+    return text_prompt
 
 def tokenize(examples, tokenizer, max_length):
     return tokenizer(examples["text"], return_tensors="pt", padding='max_length', truncation=True, max_length=max_length)

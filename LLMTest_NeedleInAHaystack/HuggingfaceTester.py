@@ -1,11 +1,11 @@
 import os
 import torch
 from LLMNeedleHaystackTester import LLMNeedleHaystackTester
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from fastchat.conversation import get_conv_template
 from utils import conv_template_dict, smart_tokenizer_and_embedding_resize
 from argparse import ArgumentParser
-from needle_config import needle_dict
+from needle_config import needle_dict, template_dict
 
 import sys
 sys.path.append("../PASTA")
@@ -38,11 +38,15 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
         if 'attn_implementation' in kwargs:
             model_load_kwargs['attn_implementation'] = kwargs.pop('attn_implementation')
 
-        for model_name in ['llama-2-70b', 'llama-2', 'llama-3', 'gemma', 'gemma-2', 'qwen2.5']:
+        for model_name in ['llama-2-70b', 'llama-2', 'llama-3', 'gemma', 'gemma-2', 'qwen2.5', 'deepseek']:
             if model_name in self.model_name.lower():
                 model_load_kwargs['torch_dtype'] = torch.bfloat16
+        if '70b' in self.model_name.lower():
+            quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+        else:
+            quantization_config = None
 
-        self.model_to_test = AutoModelForCausalLM.from_pretrained(self.model_name, device_map='auto', **model_load_kwargs)
+        self.model_to_test = AutoModelForCausalLM.from_pretrained(self.model_name, device_map='auto', quantization_config=quantization_config, **model_load_kwargs)
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
@@ -58,6 +62,8 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
         
         self.template = kwargs.pop("template")
         self.add_hint = kwargs.pop('add_hint')
+        self.prompt_template_id = kwargs.pop("prompt_template_id", "initial")
+
         if 'gemma' in self.model_name.lower():
             print("Gemma-7b-t does not support system prompts.")
             kwargs.pop('add_system_prompt')
@@ -78,7 +84,10 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
 
         if self.add_system_prompt:
             conv.append(dict(role='system', content=''))
-        content = f"You are a helpful AI assistant that answers a question using only the provided document: \n{context}\n\nQuestion: {self.retrieval_question}"
+        
+        content = template_dict[self.prompt_template_id]
+        content = content.format(context=context, retrieval_question=self.retrieval_question)
+        # f"You are a helpful AI assistant that answers a question using only the provided document: \n{context}\n\nQuestion: {self.retrieval_question}"
         conv.append(dict(role='user', content=content))
 
         if self.add_hint:
@@ -86,7 +95,7 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
             if self.template == 'raw':
                 for message in conv:
                     if message['role'] == 'user':
-                        user_prompt = message['content']
+                        user_prompt = message['content']               
                 prompt = user_prompt + "\n\n" + hint
             else:
                 conv.append(dict(role='assistant', content=hint))
@@ -127,7 +136,7 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
         '''
         return response
 
-def main(model_name, template, needle_name, evaluation_method="substring_match", context_lengths_min=200, context_lengths_max=4000, add_hint=False, add_system_prompt=True, save_model_suffix=None):
+def main(model_name, template, needle_name, evaluation_method="substring_match", context_lengths_min=200, context_lengths_max=4000, add_hint=False, add_system_prompt=True, save_model_suffix=None, prompt_template_id="initial"):
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
     ht = HuggingfaceTester(model_name=model_name, 
                            template=template,
@@ -138,7 +147,8 @@ def main(model_name, template, needle_name, evaluation_method="substring_match",
                            needle_name=needle_name,
                            add_hint=add_hint,
                            add_system_prompt=add_system_prompt,
-                           save_model_suffix=save_model_suffix)
+                           save_model_suffix=save_model_suffix,
+                           prompt_template_id=prompt_template_id)
     ht.start_test()
 
 if __name__ == "__main__":
@@ -149,6 +159,7 @@ if __name__ == "__main__":
     parser.add_argument('--add_hint', action='store_true')
     parser.add_argument('--context_lengths_max', type=int, default=4000)
     parser.add_argument('--save_model_suffix', type=str, default=None)
+    parser.add_argument('--prompt_template_id', type=str, default='initial')
    
     args = parser.parse_args()
 

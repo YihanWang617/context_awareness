@@ -25,15 +25,15 @@ def extract_attn_scores(outputs, layer_head_tuples: Tuple[int, int]=None):
             assert layer_id is not None
             if head_id is None:
                 layer_attns = outputs.attentions[layer_id]
-                layer_attns = layer_attns.squeeze(0).detach().cpu().numpy() # [NUM_HEADS, LEN, LEN]
+                layer_attns = layer_attns.squeeze(0).detach().cpu() # [NUM_HEADS, LEN, LEN]
                 attn_scores.append(layer_attns)
             else:
                 layer_attns = outputs.attentions[layer_id]
-                layer_attns = layer_attns.squeeze(0)[head_id:head_id+1].detach().cpu().numpy() # [1, LEN, LEN]
+                layer_attns = layer_attns.squeeze(0)[head_id:head_id+1].detach().cpu() # [1, LEN, LEN]
                 assert layer_attns.shape[0] == 1
                 attn_scores.append(layer_attns)
     
-    attn_scores = np.concatenate(attn_scores, axis=0) # [NUM_HEADS, LEN, LEN]
+    attn_scores = torch.concat(attn_scores, 0) # [NUM_HEADS, LEN, LEN]
     
     return attn_scores
 
@@ -156,12 +156,17 @@ def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_a
             print(rel_id)
             raise ValueError()
         retrieval_head_idx = attn_[:,user_ids].sum(-1).argmax()
-        retrieval_top_head_idx = attn_[:,user_ids].sum(-1).argsort()
-        print(retrieval_top_head_idx[-5:])
-        exit()
-        attn_distr_no_template = {'bos_token': attn_[retrieval_head_idx,bos_ids].sum(), 
-                                  'user_prompt': attn_[retrieval_head_idx,user_ids].sum(), 
-                                  'response_prompt': attn_[retrieval_head_idx,response_ids].sum(),}
+        retrieval_top_head_idx = attn_[:,user_ids].sum(-1).argsort()[-10:]
+        if not (attn_.sum(-1) == 1.0).all():
+            print(attn_.sum(-1))
+
+        # print(str([a.item() for a in retrieval_top_head_idx]), attn_[:,user_ids].sum(-1)[retrieval_top_head_idx])
+        # exit()
+        # print(attn_[retrieval_head_idx,user_ids].argsort())
+        # import pdb; pdb.set_trace()
+        attn_distr_no_template = {'bos_token': attn_[retrieval_head_idx,bos_ids].sum().item(), 
+                                  'user_prompt': attn_[retrieval_head_idx,user_ids].sum().item(), 
+                                  'response_prompt': attn_[retrieval_head_idx,response_ids].sum().item(),}
         attn_ = None
         attn = None
         
@@ -212,10 +217,16 @@ def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_a
                 print(rel_id)
                 raise ValueError()
 
-            attn_distr = {'bos_token': attn_[retrieval_head_idx,bos_ids].sum(), 
-                          'user_prompt': attn_[retrieval_head_idx,user_ids].sum(), 
-                          'response_prompt': attn_[retrieval_head_idx,response_ids].sum(),
-                          'template_tokens': attn_[retrieval_head_idx,template_ids].sum()}
+            # retrieval_head_idx = attn_[:,user_ids].sum(-1).argmax()
+            # print(retrieval_head_idx, new_retrieval_head_idx)
+
+            # print(attn_[retrieval_head_idx,user_ids].argsort())
+            # import pdb; pdb.set_trace()
+
+            attn_distr = {'bos_token': attn_[retrieval_head_idx,bos_ids].sum().item(), 
+                          'user_prompt': attn_[retrieval_head_idx,user_ids].sum().item(), 
+                          'response_prompt': attn_[retrieval_head_idx,response_ids].sum().item(),
+                          'template_tokens': attn_[retrieval_head_idx,template_ids].sum().item()}
             attn_ = None
             attn = None
 
@@ -223,9 +234,9 @@ def get_attr_distrs(conv, model, tokenizer, layer_head_tuples, sfted=True, avg_a
             for k in attn_distr.keys():
                 attn_distr[k] /= Z
             
-            attn_distr_rm_template = {'bos_token': attn_distr['bos_token'].copy(), 
-                                      'user_prompt': attn_distr['user_prompt'].copy(), 
-                                      'response_prompt': attn_distr['response_prompt'].copy(),}
+            attn_distr_rm_template = {'bos_token': attn_distr['bos_token'], 
+                                      'user_prompt': attn_distr['user_prompt'], 
+                                      'response_prompt': attn_distr['response_prompt'],}
             Z = np.sum(list(attn_distr_rm_template.values()))
             for k in attn_distr_rm_template.keys():
                 attn_distr_rm_template[k] /= Z

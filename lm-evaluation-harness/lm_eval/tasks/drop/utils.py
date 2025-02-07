@@ -75,7 +75,8 @@ def process_results(doc, results):
         if gold_answer[0].strip():
             max_em = max(max_em, exact_match)
             max_f1 = max(max_f1, f1_score)
-    return {"em": max_em, "f1": max_f1, 'contains': contains}
+    # return {"em": max_em, "f1": max_f1, 'contains': contains}
+    return {'contains': contains}
 
 
 def get_metrics(predicted, gold):

@@ -10,14 +10,19 @@ from lm_eval.api.task import ConfigurableTask
 import string
 import datasets
 from functools import partial
+from lm_eval.api.metrics import mean
 
 ARTICLES_REGEX = re.compile(r"\b(a|an|the)\b", re.UNICODE)
 
-def contains_score(items):
-    return sum([max(
-        int(bool(re.search(re.compile(re.escape(label), re.IGNORECASE), prediction)))
+def contains_score(prediction, reference):
+    return max(
+        int(bool(re.search(re.compile(re.escape(normalize_answer(label)), re.IGNORECASE), normalize_answer(prediction))))
         for label in reference
-    ) for (prediction, reference) in items])/len(items)
+    )
+    # return sum([max(
+    #     int(bool(re.search(re.compile(re.escape(label), re.IGNORECASE), prediction)))
+    #     for label in reference
+    # ) for (prediction, reference) in items])/len(items)
 
 def _squad_metric(predictions, references):
     squad_metric = datasets.load_metric("squad_v2")
@@ -28,6 +33,25 @@ def _squad_agg(key, items):
     predictions, references = zip(*items)
 
     return _squad_metric(predictions=predictions, references=references).get(key, 0)
+
+def normalize_answer(s):
+    """Lower text and remove punctuation, articles and extra whitespace."""
+
+    def remove_articles(text):
+        return ARTICLES_REGEX.sub(" ", text)
+
+    def white_space_fix(text):
+        return " ".join(text.split())
+
+    def remove_punc(text):
+        exclude = set(string.punctuation)
+        return "".join(ch for ch in text if ch not in exclude)
+
+    def lower(text):
+        return text.lower()
+
+    return white_space_fix(remove_articles(remove_punc(lower(s))))
+
 
 
 class SQUADNoTemplate(ConfigurableTask):
@@ -107,18 +131,19 @@ class SQUADNoTemplate(ConfigurableTask):
         }
 
         return {
-            "exact": (
-                predictions,
-                references,
-            ),  # Exact match (the normalized answer exactly match the gold answer)
-            "f1": (
-                predictions,
-                references,
-            ),
-            "contains": (
-                continuation[0],
-                doc["answers"]['text']
-            )
+            # "exact": (
+            #     predictions,
+            #     references,
+            # ),  # Exact match (the normalized answer exactly match the gold answer)
+            # "f1": (
+            #     predictions,
+            #     references,
+            # ),
+            # "contains": (
+            #     continuation[0],
+            #     doc["answers"]['text']
+            # )
+            'contains': contains_score(continuation[0], references['answers']['text'])
         }
 
     def aggregation(self):
@@ -128,13 +153,13 @@ class SQUADNoTemplate(ConfigurableTask):
             functions that aggregate a list of metrics
         """
         return {
-            "exact": partial(
-                _squad_agg, "exact"
-            ),  # Exact match (the normalized answer exactly match the gold answer)
-            "f1": partial(
-                _squad_agg, "f1"
-            ),
-            "contains": contains_score
+            # "exact": partial(
+            #     _squad_agg, "exact"
+            # ),  # Exact match (the normalized answer exactly match the gold answer)
+            # "f1": partial(
+            #     _squad_agg, "f1"
+            # ),
+            "contains": mean
         }
 
     def higher_is_better(self):

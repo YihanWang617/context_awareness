@@ -1,2 +1,2 @@
-task: squad_completion_no_hint_no_template_no_ind
-class: !function task.SQUADCompletionNoHintNoTemplateNoInd
+task: squad_no_template_no_ind
+class: !function task.SQUADNoTemplateNoInd

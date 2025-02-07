@@ -12,12 +12,17 @@ ARTICLES_REGEX = re.compile(r"\b(a|an|the)\b", re.UNICODE)
 import evaluate
 from functools import partial
 import datasets
+from lm_eval.api.metrics import mean
 
-def contains_score(items):
-    return sum([max(
-        int(bool(re.search(re.compile(re.escape(label), re.IGNORECASE), prediction)))
+def contains_score(prediction, reference):
+    return max(
+        int(bool(re.search(re.compile(re.escape(normalize_answer(label)), re.IGNORECASE), normalize_answer(prediction))))
         for label in reference
-    ) for (prediction, reference) in items])/len(items)
+    )
+    # return sum([max(
+    #     int(bool(re.search(re.compile(re.escape(label), re.IGNORECASE), prediction)))
+    #     for label in reference
+    # ) for (prediction, reference) in items])/len(items)
 
 def _squad_metric(predictions, references):
     squad_metric = datasets.load_metric("squad_v2")
@@ -129,26 +134,27 @@ class QUACNoTemplate(ConfigurableTask):
             "answers": {"text": doc["answers"]["texts"][0], "answer_start": doc["answers"]["answer_starts"][0]},
         }
         return {
-            "exact": (
-                predictions,
-                references,
-            ),  # Exact match (the normalized answer exactly match the gold answer)
-            "f1": (
-                predictions,
-                references,
-            ),
-            "HasAns_exact": (
-                predictions,
-                references
-            ),
-            "HasAns_f1": (
-                predictions,
-                references
-            ),
-            'contains': (
-                continuation[0],
-                references['answers']['text']
-            )
+            # "exact": (
+            #     predictions,
+            #     references,
+            # ),  # Exact match (the normalized answer exactly match the gold answer)
+            # "f1": (
+            #     predictions,
+            #     references,
+            # ),
+            # "HasAns_exact": (
+            #     predictions,
+            #     references
+            # ),
+            # "HasAns_f1": (
+            #     predictions,
+            #     references
+            # ),
+            'contains': contains_score(continuation[0], references['answers']['text'])
+            # (
+            #     continuation[0],
+            #     references['answers']['text']
+            # )
             
         }
 
@@ -159,19 +165,19 @@ class QUACNoTemplate(ConfigurableTask):
             functions that aggregate a list of metrics
         """
         return {
-            "exact": partial(
-                _squad_agg, "exact"
-            ),  # Exact match (the normalized answer exactly match the gold answer)
-            "f1": partial(
-                _squad_agg, "f1"
-            ),
-            "HasAns_exact": partial(
-                _squad_agg, "HasAns_exact"
-            ),  # Exact match (the normalized answer exactly match the gold answer)
-            "HasAns_f1": partial(
-                _squad_agg, "HasAns_f1"
-            ),  # The F-score of predicted tokens versus the gold answer
-            "contains": contains_score
+            # "exact": partial(
+            #     _squad_agg, "exact"
+            # ),  # Exact match (the normalized answer exactly match the gold answer)
+            # "f1": partial(
+            #     _squad_agg, "f1"
+            # ),
+            # "HasAns_exact": partial(
+            #     _squad_agg, "HasAns_exact"
+            # ),  # Exact match (the normalized answer exactly match the gold answer)
+            # "HasAns_f1": partial(
+            #     _squad_agg, "HasAns_f1"
+            # ),  # The F-score of predicted tokens versus the gold answer
+            "contains": mean
         }
 
     def higher_is_better(self):

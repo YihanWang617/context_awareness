@@ -72,8 +72,10 @@ def remove_prompt(item, max_token_length=2047):
 
     return item
 
+positive_cnt=negative_cnt=none_cnt=context_cnt=0
+
 def modify_prompt(item, threshold=0.5, max_token_length=2047):
-    global positive_cnt, negative_cnt, none_cnt
+    global positive_cnt, negative_cnt, none_cnt, context_cnt
     new_item = {}
     conv = item.pop('messages')
     
@@ -85,8 +87,10 @@ def modify_prompt(item, threshold=0.5, max_token_length=2047):
                 ratio = float(prompt[-1][:-1])
                 if ratio > threshold:
                     new_prompt = "[IND]" #f"Base your answer more on the given information."
+                    positive_cnt += 1
                 else:
                     new_prompt = ""
+                    negative_cnt += 1
                 if len(conv_msg['content']) > 0 and conv_msg['content'][-1].isalnum():
                     conv_msg['content'] += '.'
                 conv_msg['content'] += " " + new_prompt if new_prompt != "" else ""

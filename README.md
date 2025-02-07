@@ -86,13 +86,13 @@ lm_eval     --model hf-pasta     --model_args pretrained=meta-llama/Meta-Llama-3
 **Labeling instruction-finetuning dataset with context-dependency score**
 
 ```
-python process_dataset.py --dataset_name ucla-cmllab/vicuna_cleaned --preprocess_function_name add_prompt --configs='{"probe_model":"ucla-cmllab/tinyllama-sft-vicuna-full"}' --save_huggingface_hub yihanwang617/vicuna_cleaned_processed
+python process_dataset.py --dataset_name ucla-cmllab/vicuna_cleaned --preprocess_function_name add_prompt --configs='{"probe_model":"ucla-cmllab/tinyllama-sft-vicuna-full"}' --save_huggingface_hub yihanwang617/vicuna_clean_processed
 ```
 This script will append a context-dependency score to each user prompt, in the format of "The user attention ratio is [context-dependency-score]."
 Pre-processed datasets with the context-dependency scores for WizardLM-70k, ShareGPT(Vicuna), and UltraChat-200k can be found in the [HF collection](https://huggingface.co/collections/ucla-cmllab/context-awareness-in-instruction-finetuning-671b44e2a9a89705ec2b8208)
 
 ```
-python process_dataset.py --dataset_name yihanwang617/vicuna_cleaned_processed --preprocess_function_name modify_prompt --save_huggingface_hub yihanwang617/vicuna_cleaned_processed_indicator_0.6 --config='{"threshold":0.6}'
+python process_dataset.py --dataset_name yihanwang617/vicuna_clean_processed --preprocess_function_name modify_prompt --save_huggingface_hub yihanwang617/vicuna_clean_processed_indicator_0.6 --config='{"threshold":0.6}'
 ```
 This script replaces the context-dependency string appended to each user prompt with a special character '[IND]' if the score is larger than the given threshold, and an empty string '' if it's lower than the threshold.
 

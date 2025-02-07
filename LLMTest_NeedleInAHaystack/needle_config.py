@@ -25,3 +25,10 @@ needle_dict = {
         'substr_validation_words': 'figs,prosciutto,smoked,applewood,bacon,lemon'
     },
 }
+
+template_dict = {
+    "initial": "You are a helpful AI assistant that answers a question using only the provided document: \n{context}\n\nQuestion: {retrieval_question}",
+    "1": "You are a helpful AI assistant that answers a question using only the provided context: \n{context}\n\nQuestion: {retrieval_question}",
+    "2": "Document: \n{context}\n\nAnswer the question accoriding to the provided document: {retrieval_question}",
+    "3": "Context: \n{context}\n\nAnswer the question accoriding to the provided context: {retrieval_question}",
+}

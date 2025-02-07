@@ -41,9 +41,9 @@ def wizardLM_to_ultrachat(item, **kwargs):
 
 def add_prompt(item, model, tokenizer, max_token_length=2047, layer_idx=15):
     new_item = {}
-    text_item = conv_to_text(item, tokenizer)
+    prompt_text = conv_to_text(item, tokenizer)
     conv = item.pop('messages')
-    batch = tokenizer([text_item['text']], return_tensors="pt", padding='max_length', truncation=True, max_length=max_token_length)
+    batch = tokenizer([prompt_text], return_tensors="pt", padding='max_length', truncation=True, max_length=max_token_length)
     avg_user_attention, user_attentions = get_batch_user_attention(batch, model, tokenizer, return_separate=True, layer_index=layer_idx)
     for idx, conv_msg in enumerate(conv):
         role = conv_msg['role']
@@ -57,7 +57,8 @@ def add_prompt(item, model, tokenizer, max_token_length=2047, layer_idx=15):
             user_attentions = user_attentions[1:]
     new_item = {'messages': conv}
     new_item.update(item)
-    new_item.pop('text')
+    if 'text' in new_item:
+        new_item.pop('text')
 
     return new_item
 

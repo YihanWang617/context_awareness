@@ -74,7 +74,7 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
         super().__init__(**kwargs)
 
     def get_encoding(self, context):
-        return self.tokenizer.encode(context)[1:]
+        return self.tokenizer.encode(context, add_special_tokens=False)
 
     def get_decoding(self, encoded_context):
         return self.tokenizer.decode(encoded_context)

@@ -1,0 +1,2 @@
+task: mathqa_conv_no_ind
+class: !function task.MathQA_Conv_NoInd

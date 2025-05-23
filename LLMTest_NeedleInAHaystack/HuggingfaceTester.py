@@ -97,6 +97,15 @@ class HuggingfaceTester(LLMNeedleHaystackTester):
                     if message['role'] == 'user':
                         user_prompt = message['content']               
                 prompt = user_prompt + "\n\n" + hint
+            if self.template == 'ctx_in_assistant':
+                for message in conv:
+                    if message['role'] == 'user':
+                        user_prompt = message['content']
+                        message['content'] = 'Generate a document, a question and answer the question according to the document.'
+                conv.append(dict(role='assistant', content=user_prompt + "\n\n" + hint))
+                prompt = self.tokenizer.apply_chat_template(conv, tokenize=False, add_generation_prompt=False)
+                prompt = prompt.strip().removesuffix(f'{self.tokenizer.bos_token}').removesuffix(f'{self.tokenizer.eos_token}').removesuffix(f'{self.tokenizer.bos_token}').removesuffix('<end_of_turn>').strip()
+
             else:
                 conv.append(dict(role='assistant', content=hint))
                 prompt = self.tokenizer.apply_chat_template(conv, tokenize=False, add_generation_prompt=False)
@@ -154,7 +163,7 @@ def main(model_name, template, needle_name, evaluation_method="substring_match",
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('--model_name', help='path of the model on huggingface hub')
-    parser.add_argument('--template', choices=["raw", "default"], default="default")
+    parser.add_argument('--template', choices=["raw", "default", "ctx_in_assistant"], default="default")
     parser.add_argument('--needle_name', default="SF")
     parser.add_argument('--add_hint', action='store_true')
     parser.add_argument('--context_lengths_max', type=int, default=4000)

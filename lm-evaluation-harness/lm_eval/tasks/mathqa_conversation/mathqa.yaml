@@ -1,0 +1,2 @@
+task: mathqa_conv
+class: !function task.MathQA_Conv
